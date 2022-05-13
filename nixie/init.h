@@ -49,3 +49,21 @@ void init_pin_indicator(){
   pinMode(D_L4, OUTPUT);
   Serial.println("Done.");
 }
+
+void init_led()
+{
+  Serial.print("Initializing LED...");
+  pinMode(LED1, OUTPUT); //init pin  for LED1
+  digitalWrite(LED1, LOW); //LED1 off
+  pinMode(LED2, OUTPUT); //init pin  for LED2
+  digitalWrite(LED2, LOW); //LED2 off
+  Serial.println("  Done.");
+}
+
+void init_buzzer()
+{
+  Serial.print("Initializing Buzzer...");
+  pinMode(Buzzer, OUTPUT); //init pin  for Buzzer
+  digitalWrite(Buzzer, LOW); //Buzzer off
+  Serial.println("  Done.");
+}

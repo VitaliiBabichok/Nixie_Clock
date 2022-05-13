@@ -7,6 +7,8 @@ void setup() {
   connect_Wifi();
   init_time_client();
   init_pin_indicator();
+  init_led();
+  init_buzzer();
   // put your setup code here, to run once:
 
 }
