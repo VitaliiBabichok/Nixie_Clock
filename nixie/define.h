@@ -1,3 +1,7 @@
+#define MAX_SECOND 59
+#define MAX_MINUTE 59
+#define MAX_HOUR 23
+#define START_DIGIT 0
 #define GMT 10800 // offset 3600 GMT+1
 
 // Define NTP Client to get time
