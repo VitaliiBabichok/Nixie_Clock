@@ -4,8 +4,9 @@
 #include "init.h"
 
 void setup() {
-  connectWifi();
+  connect_Wifi();
   init_time_client();
+  init_pin_indicator();
   // put your setup code here, to run once:
 
 }
