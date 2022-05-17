@@ -1,6 +1,6 @@
 #include "define.h"
 
-void connect_Wifi(){
+void connect_wifi(){
   // Initialize Serial Monitor
   Serial.begin(115200);
   Serial.print("Connecting to ");
@@ -63,7 +63,7 @@ void init_led()
 void init_buzzer()
 {
   Serial.print("Initializing Buzzer...");
-  pinMode(Buzzer, OUTPUT); //init pin  for Buzzer
-  digitalWrite(Buzzer, LOW); //Buzzer off
+  pinMode(BUZZER, OUTPUT); //init pin  for Buzzer
+  digitalWrite(BUZZER, LOW); //Buzzer off
   Serial.println("  Done.");
 }

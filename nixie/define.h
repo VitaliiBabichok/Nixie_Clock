@@ -40,4 +40,4 @@ const char* password = "WifiForChill";
 #define LED2 15
 
 // Connect to pin Buzzer for alarm
-#define Buzzer 13
+#define BUZZER 13

@@ -6,33 +6,38 @@
 int Hour;
 int Minute;
 int Second;
+int set;
+
+TaskHandle_t HandleSettingClok;
 
 void setup() {
-  connect_Wifi();
+  connect_wifi();
   init_time_client();
   init_pin_indicator();
   init_led();
   init_buzzer();
-  getTime();
+  get_time();
   
-  xTaskCreate(Task_incremet_time, "updateTime", 1000, NULL, 1, NULL);
+  xTaskCreate(task_increment_time, "updateTime", 1000, NULL, 1, NULL);
+  xTaskCreate(task_settings_clock, "settingClock", 1000, NULL, 1, NULL);
 }
-void getTime() {
+void get_time() {
   while (!timeClient.update()) {
     timeClient.forceUpdate();
   }
   Minute = timeClient.getMinutes();
   Second = timeClient.getSeconds();Hour = timeClient.getHours();
 }
-void Task_incremet_time(void *parameters) {
+void task_increment_time(void *parameters) {
   for (;;)
   {
-    Serial.print("Time: ");
-    Serial.print(Hour);
-    Serial.print(":");
-    Serial.print(Minute);
-    Serial.print(":");
-    Serial.println(Second);
+//    //For debug
+//    Serial.print("Time: ");
+//    Serial.print(Hour);
+//    Serial.print(":");
+//    Serial.print(Minute);
+//    Serial.print(":");
+//    Serial.println(Second);
     Second++;
     if (Second > MAX_SECOND)
     {
@@ -50,6 +55,38 @@ void Task_incremet_time(void *parameters) {
     }
     delay(1000);
   }
+}
+
+void task_settings_clock(void *parameters) //task
+{
+  for (;;)
+  {
+//    //This method works with interrupts on the comport
+//    while (Serial.available() <= 0)
+//    {
+//    }
+//    set = Serial.read() - '0';
+    switch (set)
+    {
+      case 1:// set stopwatch
+
+        Serial.println("=============================================");
+        Serial.println("You have selected the stopwatch mode");
+        break;
+      case 2:// set timer
+
+        Serial.println("=============================================");
+        Serial.println("You have selected the timer mode");
+        break;
+      default:// set clock
+
+        Serial.println("=============================================");
+        Serial.println("Default mode clock");
+        break;
+    }
+    vTaskSuspend(HandleSettingClok);
+  }
+
 }
 
 void loop() {
