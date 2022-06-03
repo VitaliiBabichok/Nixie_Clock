@@ -29,6 +29,8 @@ bool is_stopped = false;
 
 int32_t duration = 0;
 
+command_clock_t prev_mod;
+
 void setup() {
   connect_wifi();
   init_time_client();
@@ -61,7 +63,7 @@ void get_time() {
   Second = timeClient.getSeconds();
   Hour = timeClient.getHours();
 }
-int get_time_range(int low_limit, int hight_limit, String str)
+int get_time_range(int low_limit, int hight_limit, String str) 
 {
   int Time;
   do {
@@ -79,6 +81,17 @@ int get_time_range(int low_limit, int hight_limit, String str)
   while ((Time < low_limit) || (Time > hight_limit));
   return Time;
 }
+int8_t get_minutes(int32_t count)
+{
+	return count/60;
+}
+int8_t get_seconds(int32_t count)
+{
+	return count%60;
+}
+
+
+
 void set_time(int* Time1, int* Time2, int mod)
 {
   switch (mod)
@@ -94,6 +107,7 @@ void set_time(int* Time1, int* Time2, int mod)
       break;
   }
 }
+
 typedef void (*mode_function_t) (const int arg1, const int arg2);
 
 mode_function_t mode_function = mode_clock;
@@ -113,10 +127,10 @@ void mode_stopwatch(const int MM, const int SS) // format MM:SS
     ++duration;
   }
   // to do
-//  uint8_t minute = get_minutes(duration);
-//  uint8_t second = get_seconds(duration);
-//
-//  parseIndicator(minute, second);
+ uint8_t minute = get_minutes(duration);
+ uint8_t second = get_seconds(duration);
+
+ parseIndicator(minute, second);
 }
 
 void mode_timer(const int MM, const int SS) // format MM:SS
@@ -224,6 +238,7 @@ void set_current_mode(int mod)
       is_stopped = false;
       duration = 0;
       mode_function = mode_stopwatch;
+			prev_mod=COMMAND_STOPWATCH;
       break;
 
     case COMMAND_TIMER:
@@ -232,6 +247,7 @@ void set_current_mode(int mod)
       is_stopped = false;
 //      duration = get_timer_time();
       mode_function = mode_timer;
+			prev_mod=COMMAND_TIMER;
       break;
 
     case COMMAND_PAUSE:
@@ -246,12 +262,11 @@ void set_current_mode(int mod)
       is_stopped = false;
       break;
 
-    //    case COMMAND_RESET:
-    //      Serial.println("=============================================");
-    //      Serial.println("RESUME");
-    //      is_stopped = false;
-    //      duration = get_timer_time();
-    //      break;
+		case COMMAND_RESET:
+			Serial.println("=============================================");
+			Serial.println("RESET");
+			set_current_mode(prev_mod);
+			break;
 
     default:
       Serial.println("=============================================");
