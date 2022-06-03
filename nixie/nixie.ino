@@ -14,9 +14,10 @@ TaskHandle_t HandleSettingClock;
 TaskHandle_t HandleClock;
 TaskHandle_t HandleSetMode;
 
+TimerHandle_t xTimer = NULL;
+
 typedef enum command_clock_t {
   COMMAND_CLOCK,
-  COMMAND_SET_TIME,
   COMMAND_STOPWATCH,
   COMMAND_TIMER,
   COMMAND_INVALID
@@ -37,7 +38,7 @@ void set_stopwatch(const int MM, const int SS) //format MM:SS
   //func reset time;
 
   //func exit mode;
-  parseIndicator(MM-Minute_Start, SS-Second_Start);
+  parseIndicator(MM - Minute_Start, SS - Second_Start);
 }
 
 void set_timer(const int MM, const int SS) //format MM:SS
@@ -47,28 +48,24 @@ void set_timer(const int MM, const int SS) //format MM:SS
   //func reset time;
 
   //func check time set and real time
-    //func buzzer
-    
+  //func buzzer
+
   //func exit mode;
-  parseIndicator(Minute_Start-MM, Second_Start-SS);
+  parseIndicator(Minute_Start - MM, Second_Start - SS);
 }
 
 void set_alarm(const int HH, const int MM) //format HH:MM
 {
   //func check time set and real time
-    //func buzzer
+  //func buzzer
 
-  // func exit mode    
+  // func exit mode
 }
 
-void set_mode (general_function f, const int Time1, const int Time2)
+void show_mode (general_function f, const int Time1, const int Time2)
 {
-  f(Time1,Time2) ;    // call the passed-in function
+  f(Time1, Time2) ;   // call the passed-in function
 }
-
-TimerHandle_t xTimer = NULL;
-
-
 
 
 
@@ -80,6 +77,7 @@ void setup() {
   init_buzzer();
   get_time();
 
+  xTaskCreate(task_set_mode,"selected mod clock", 1500, NULL, 1, NULL);
   xTimer = xTimerCreate( "Timer", 1000, pdTRUE, NULL, increment_time );
   if ( xTimer == NULL )
   {
@@ -92,8 +90,6 @@ void setup() {
       Serial.println("Timer was not started");
     }
   }
-
-
 }
 
 void increment_time(TimerHandle_t xTimer) {
@@ -113,8 +109,51 @@ void increment_time(TimerHandle_t xTimer) {
       }
     }
   }
+  current_mode();
+
 }
 
+void task_set_mode(void *parameters) {
+  for (;;)
+  {
+      while (Serial.available() <= 0)
+      {
+      }
+      Set = (command_clock_t)Serial.parseInt();
+  }
+}
+void current_mode()
+{
+  switch (Set) {
+    case COMMAND_CLOCK:
+      Serial.println("=============================================");
+      Serial.println("CLOCK");
+      show_mode(set_clock, Hour, Minute);
+      break;
+
+    case COMMAND_STOPWATCH:
+      Serial.println("=============================================");
+      Serial.println("STOPWATCH");
+      show_mode(set_stopwatch, Minute, Second);
+      break;
+
+    case COMMAND_TIMER:
+      Serial.println("=============================================");
+      Serial.println("TIMER");
+      show_mode(set_timer, Minute, Second);
+      break;
+
+    default:
+      Serial.println("=============================================");
+      Serial.println("Invalid command");
+      Serial.println("Please enter digit in range 0 to 2");
+      Serial.println("0 - Clock,");
+      Serial.println("1 - StopWatch,");
+      Serial.println("2 - Timer");
+      break;
+
+  }
+}
 
 void get_time() {
   while (!timeClient.update()) {
@@ -124,6 +163,7 @@ void get_time() {
   Second = timeClient.getSeconds();
   Hour = timeClient.getHours();
 }
+
 void  nixieWriteIndicator(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t value) {
   if (d == NULL) // Digit range 0 to 5
   {
