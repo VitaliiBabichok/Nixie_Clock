@@ -17,12 +17,14 @@ TaskHandle_t HandleSetMode;
 TimerHandle_t xTimer = NULL;
 
 typedef enum command_clock_t {
+  COMMAND_AUTO_TIME,
+  COMMAND_SET_TIME,
   COMMAND_CLOCK,
   COMMAND_STOPWATCH,
   COMMAND_TIMER,
   COMMAND_INVALID
 };
-command_clock_t Set = COMMAND_CLOCK;
+command_clock_t Set = COMMAND_AUTO_TIME;
 
 typedef void (*general_function) (const int arg1, const int arg2);
 
@@ -75,9 +77,8 @@ void setup() {
   init_pin_indicator();
   init_led();
   init_buzzer();
-  get_time();
 
-  xTaskCreate(task_set_mode,"selected mod clock", 1500, NULL, 1, NULL);
+  xTaskCreate(task_set_mode, "selected mod clock", 1500, NULL, 1, &HandleSetMode);
   xTimer = xTimerCreate( "Timer", 1000, pdTRUE, NULL, increment_time );
   if ( xTimer == NULL )
   {
@@ -116,15 +117,32 @@ void increment_time(TimerHandle_t xTimer) {
 void task_set_mode(void *parameters) {
   for (;;)
   {
-      while (Serial.available() <= 0)
-      {
-      }
-      Set = (command_clock_t)Serial.parseInt();
+    while (Serial.available() <= 0)
+    {
+    }
+    Set = (command_clock_t)Serial.parseInt();
   }
 }
 void current_mode()
 {
+  vTaskSuspend(HandleSetMode);
   switch (Set) {
+    case COMMAND_AUTO_TIME:
+      Serial.println("=============================================");
+      Serial.println("Get time GMT +3");
+      get_time();
+      //      show_mode(set_clock, Hour, Minute);
+      Set=COMMAND_CLOCK;
+      break;
+      
+    case COMMAND_SET_TIME:
+      Serial.println("=============================================");
+      Serial.println("Set time manual");
+      set_time(&Hour,&Minute);
+      //      show_mode(set_clock, Hour, Minute);
+      Set=COMMAND_CLOCK;
+      break;
+      
     case COMMAND_CLOCK:
       Serial.println("=============================================");
       Serial.println("CLOCK");
@@ -146,13 +164,16 @@ void current_mode()
     default:
       Serial.println("=============================================");
       Serial.println("Invalid command");
-      Serial.println("Please enter digit in range 0 to 2");
-      Serial.println("0 - Clock,");
-      Serial.println("1 - StopWatch,");
-      Serial.println("2 - Timer");
+      Serial.println("Please enter digit in range 0 to 4");
+      Serial.println("0 - Auto time (GMT +3),");
+      Serial.println("1 - Set time,");
+      Serial.println("2 - Clock,");
+      Serial.println("3 - StopWatch,");
+      Serial.println("4 - Timer");
       break;
-
   }
+
+  vTaskResume(HandleSetMode);
 }
 
 void get_time() {
@@ -162,6 +183,56 @@ void get_time() {
   Minute = timeClient.getMinutes();
   Second = timeClient.getSeconds();
   Hour = timeClient.getHours();
+}
+
+void set_time(int* Time1, int* Time2)
+{
+switch (Set)
+{
+  case COMMAND_SET_TIME:
+  // set hour
+  do {
+    Serial.println("Set hours. Please enter digit in range 0 to 24.");
+    while (Serial.available() <= 0)
+    {
+    }
+    *Time1 = Serial.parseInt();
+  }
+  while ((*Time1 < START_DIGIT) || (*Time1 > MAX_HOUR));
+
+  // set minute
+  do {
+    Serial.println("Set minutes. Please enter digit in range 0 to 59.");
+    while (Serial.available() <= 0)
+    {
+    }
+    *Time2 = Serial.parseInt();
+  }
+  while ((*Time2 < START_DIGIT) || (*Time2 > MAX_MINUTE));
+  break;
+
+  case COMMAND_TIMER:
+  // set minute
+  do {
+    Serial.println("Set minutes. Please enter digit in range 0 to 59.");
+    while (Serial.available() <= 0)
+    {
+    }
+    *Time1 = Serial.parseInt();
+  }
+  while ((*Time1 < START_DIGIT) || (*Time1 > MAX_HOUR));
+
+  // set second
+  do {
+    Serial.println("Set seconds. Please enter digit in range 0 to 59.");
+    while (Serial.available() <= 0)
+    {
+    }
+    *Time2 = Serial.parseInt();
+  }
+  while ((*Time2 < START_DIGIT) || (*Time2 > MAX_MINUTE));
+}
+  
 }
 
 void  nixieWriteIndicator(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t value) {
