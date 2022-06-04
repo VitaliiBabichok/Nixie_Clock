@@ -90,7 +90,14 @@ int8_t get_seconds(int32_t count)
 	return count%60;
 }
 
+int32_t get_timer_time(int mod)
+{
+	int32_t min;
+	int32_t sec;
+	set_time(&min, &sec, mod);
+	return min * 60 + sec;
 
+}
 
 void set_time(int* Time1, int* Time2, int mod)
 {
@@ -126,7 +133,6 @@ void mode_stopwatch(const int MM, const int SS) // format MM:SS
   {
     ++duration;
   }
-  // to do
  uint8_t minute = get_minutes(duration);
  uint8_t second = get_seconds(duration);
 
@@ -143,11 +149,12 @@ void mode_timer(const int MM, const int SS) // format MM:SS
     --duration;
   }
 
-//  uint8_t minute = get_minutes(duration);
-//  uint8_t second = get_seconds(duration);
+ uint8_t minute = get_minutes(duration);
+ uint8_t second = get_seconds(duration);
 //
-//  parseIndicator(minute, second);
+ parseIndicator(minute, second);
 }
+
 void increment_time(TimerHandle_t xTimer) {
 
   Second++;
@@ -168,6 +175,18 @@ void increment_time(TimerHandle_t xTimer) {
   mode_function(Hour, Minute);
 }
 
+// void print_settings()
+// {
+// 	Serial.print("Please enter digit in range 0 to 8\n");
+// 	Serial.print("0 - Auto time (GMT +3),\n");
+// 	Serial.print("1 - Set time,\n");
+// 	Serial.print("2 - Clock,\n");
+// 	Serial.print("3 - StopWatch,\n");
+// 	Serial.print("4 - Timer,\n");
+// 	Serial.print("5 - Stop time (Timer or StopWatch),\n");
+// 	Serial.print("6 - Resume time (Timer or StopWatch),\n");
+// 	Serial.print("7 - Reset time (Timer or StopWatch)\n");
+// }
 
 void  nixieWriteIndicator(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t value) {
   if (d == NULL) // Digit range 0 to 5
@@ -245,7 +264,7 @@ void set_current_mode(int mod)
       Serial.println("=============================================");
       Serial.println("TIMER");
       is_stopped = false;
-//      duration = get_timer_time();
+     	duration = get_timer_time(mod);
       mode_function = mode_timer;
 			prev_mod=COMMAND_TIMER;
       break;
@@ -265,13 +284,14 @@ void set_current_mode(int mod)
 		case COMMAND_RESET:
 			Serial.println("=============================================");
 			Serial.println("RESET");
+			duration=0;
 			set_current_mode(prev_mod);
 			break;
 
     default:
       Serial.println("=============================================");
       Serial.println("Invalid command");
-      Serial.println("Please enter digit in range 0 to 4");
+      Serial.println("Please enter digit in range 0 to 8");
       Serial.println("0 - Auto time (GMT +3),");
       Serial.println("1 - Set time,");
       Serial.println("2 - Clock,");
