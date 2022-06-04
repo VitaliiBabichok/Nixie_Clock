@@ -17,18 +17,17 @@ typedef enum {
   COMMAND_CLOCK,
   COMMAND_STOPWATCH,
   COMMAND_TIMER,
+  COMMAND_ALARM,
   COMMAND_PAUSE,
   COMMAND_RESUME,
   COMMAND_RESET,
+  COMMAND_ALARM_OFF,
   COMMAND_INVALID
 } command_clock_t;
 
-
-
 bool is_stopped = false;
-
+bool is_alarm=false;
 int32_t duration = 0;
-
 command_clock_t prev_mod;
 
 void setup() {
@@ -89,7 +88,6 @@ int8_t get_seconds(int32_t count)
 {
 	return count%60;
 }
-
 int32_t get_timer_time(int mod)
 {
 	int32_t min;
@@ -98,7 +96,6 @@ int32_t get_timer_time(int mod)
 	return min * 60 + sec;
 
 }
-
 void set_time(int* Time1, int* Time2, int mod)
 {
   switch (mod)
@@ -106,6 +103,7 @@ void set_time(int* Time1, int* Time2, int mod)
     case COMMAND_SET_TIME:
       *Time1 = get_time_range(0, 24, "Set hour");
       *Time2 = get_time_range(0, 59, "Set minute");
+      Second=0;
       break;
 
     case COMMAND_TIMER:
@@ -115,8 +113,31 @@ void set_time(int* Time1, int* Time2, int mod)
   }
 }
 
-typedef void (*mode_function_t) (const int arg1, const int arg2);
 
+void check_time(uint8_t time1,uint8_t time2, uint8_t comp_time1, uint8_t comp_time2)
+{
+	if( (time1==comp_time1) && (time2==comp_time2) )
+		{
+			is_alarm = true;
+		}
+}
+
+void buzzer(bool alarm)
+{
+	if(alarm)
+	{
+		Serial.println("Buzzer - ON!!!");
+		digitalWrite(BUZZER,HIGH);
+		delay(7000);
+		digitalWrite(BUZZER,LOW);
+		delay(3000);
+
+	}
+				
+}
+
+
+typedef void (*mode_function_t) (const int arg1, const int arg2);
 mode_function_t mode_function = mode_clock;
 
 void mode_clock(const int HH, const int MM) // format HH:MM
@@ -144,15 +165,16 @@ void mode_timer(const int MM, const int SS) // format MM:SS
   (void)MM;
   (void)SS;
 
-  if (!is_stopped)
+  if (!is_stopped && (duration!=0) )
   {
     --duration;
   }
 
  uint8_t minute = get_minutes(duration);
  uint8_t second = get_seconds(duration);
-//
- parseIndicator(minute, second);
+check_time(minute,second,0,0);
+buzzer(is_alarm);
+parseIndicator(minute, second);
 }
 
 void increment_time(TimerHandle_t xTimer) {
@@ -229,7 +251,6 @@ void loop() {
 
 void set_current_mode(int mod)
 {
-	
   switch (mod) {
     case COMMAND_AUTO_TIME:
       Serial.println("=============================================");
@@ -281,12 +302,22 @@ void set_current_mode(int mod)
       is_stopped = false;
       break;
 
-		case COMMAND_RESET:
-			Serial.println("=============================================");
-			Serial.println("RESET");
-			duration=0;
-			set_current_mode(prev_mod);
-			break;
+    case COMMAND_RESET:
+      Serial.println("=============================================");
+      Serial.println("RESET");
+      duration=0;
+      set_current_mode(prev_mod);
+      break;
+
+		case COMMAND_ALARM_OFF:
+      Serial.println("=============================================");
+      Serial.println("ALARM OFF");
+      is_alarm=false;
+      // mode_function = mode_clock;
+			Serial.println("Buzzer - Of!!!");
+			digitalWrite(BUZZER,LOW);
+			set_current_mode(COMMAND_CLOCK);
+      break;
 
     default:
       Serial.println("=============================================");
@@ -297,9 +328,11 @@ void set_current_mode(int mod)
       Serial.println("2 - Clock,");
       Serial.println("3 - StopWatch,");
       Serial.println("4 - Timer,");
-      Serial.println("5 - Stop time (Timer or StopWatch),");
-      Serial.println("6 - Resume time (Timer or StopWatch),");
-      Serial.println("7 - Reset time (Timer or StopWatch)");
+      Serial.println("5 - Alarm,");
+      Serial.println("6 - Stop time (Timer or StopWatch),");
+      Serial.println("7 - Resume time (Timer or StopWatch),");
+      Serial.println("8 - Reset time (Timer or StopWatch),");
+      Serial.println("9 - Alarm off");
       break;
   }
 
