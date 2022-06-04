@@ -41,7 +41,7 @@ void setup() {
   init_buzzer();
 
   xTaskCreate(task_set_mode, "selected mod clock", 1500, NULL, 1, &HandleSetMode);
-
+	xTaskCreate(task_blink_led, "flashing LEDs", 1000, NULL,2,NULL);
   xTimer = xTimerCreate( "Timer", 1000, pdTRUE, NULL, increment_time );
   if ( xTimer == NULL )
   {
@@ -61,9 +61,10 @@ void get_time() {
   while (!timeClient.update()) {
     timeClient.forceUpdate();
   }
-  Minute = timeClient.getMinutes();
-  Second = timeClient.getSeconds();
   Hour = timeClient.getHours();
+	Minute = timeClient.getMinutes();
+  Second = timeClient.getSeconds();
+
 }
 int get_time_range(int low_limit, int hight_limit, String str) 
 {
@@ -120,6 +121,7 @@ void set_time(int* Time1, int* Time2, int mod)
       break;
 
   }
+
 }
 
 
@@ -179,8 +181,9 @@ void mode_timer(const int MM, const int SS) // format MM:SS
     --duration;
   }
 
- uint8_t minute = get_minutes(duration);
- uint8_t second = get_seconds(duration);
+uint8_t minute = get_minutes(duration);
+uint8_t second = get_seconds(duration);
+
 check_time(minute,second,0,0);
 buzzer(is_alarm);
 parseIndicator(minute, second);
@@ -264,7 +267,7 @@ void set_current_mode(int mod)
   switch (mod) {
     case COMMAND_AUTO_TIME:
       Serial.println("=============================================");
-      Serial.println("Get time GMT +3");
+      Serial.print("Get time GMT +3");
 			get_time();
 			set_current_mode(COMMAND_CLOCK);
       break;
@@ -272,7 +275,7 @@ void set_current_mode(int mod)
     case COMMAND_SET_TIME:
       Serial.println("=============================================");
       Serial.println("Set time manual");
-      set_time(&Hour, &Minute,mod);
+      set_time(&Hour, &Minute, mod);
 			set_current_mode(COMMAND_CLOCK);
       break;
 
@@ -356,6 +359,7 @@ void set_current_mode(int mod)
 
 }
 
+
 void task_set_mode(void *parameters)
 {
   command_clock_t mod = COMMAND_AUTO_TIME;
@@ -369,4 +373,18 @@ void task_set_mode(void *parameters)
     mod = (command_clock_t)Serial.parseInt();
     set_current_mode(mod);
   }
+}
+
+void task_blink_led(void *parameters)
+{
+	for(;;)
+	{
+		digitalWrite(LED1, HIGH);
+		digitalWrite(LED2, HIGH);
+		vTaskDelay(700);
+		digitalWrite(LED1, LOW);
+		digitalWrite(LED2, LOW);
+		vTaskDelay(300);
+		}
+	
 }
